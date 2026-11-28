@@ -6,11 +6,11 @@ A multi-tenant e-commerce backend built with Ruby on Rails. Each shop manages it
 
 ## Key features
 
-- **Tenant isolation.** Each shop signs in with its own API token (`Authorization: Bearer <token>`). Every query starts from the current shop (`current_shop.products.find(id)`), so another shop's records return 404. See [`ApplicationController`](app/controllers/application_controller.rb).
-- **No overselling.** [`Orders::Place`](app/services/orders/place.rb) locks each product row (`SELECT ... FOR UPDATE`) inside one transaction before reducing stock. A `CHECK (stock >= 0)` constraint backs this up. [`place_concurrency_spec.rb`](spec/services/orders/place_concurrency_spec.rb) proves it: four buyers race for the last unit and only one succeeds.
-- **Safe retries for orders.** Send an `Idempotency-Key` header and a repeated request returns the original order instead of creating a new one.
-- **Safe webhook handling.** [`Webhooks::PaymentsController`](app/controllers/webhooks/payments_controller.rb) checks the HMAC signature, ignores duplicate events, and hands work to [`ProcessWebhookEventJob`](app/jobs/process_webhook_event_job.rb). Processing the same event twice does nothing extra, and failed jobs are retried by Sidekiq.
 - **Order cancellation.** [`Orders::Cancel`](app/services/orders/cancel.rb) returns stock and is safe to call twice. Paid orders can't be cancelled.
+- **Safe retries for orders.** Send an `Idempotency-Key` header and a repeated request returns the original order instead of creating a new one.
+- **Tenant isolation.** Each shop signs in with its own API token (`Authorization: Bearer <token>`). Every query starts from the current shop (`current_shop.products.find(id)`), so another shop's records return 404. See [`ApplicationController`](app/controllers/application_controller.rb).
+- **Safe webhook handling.** [`Webhooks::PaymentsController`](app/controllers/webhooks/payments_controller.rb) checks the HMAC signature, ignores duplicate events, and hands work to [`ProcessWebhookEventJob`](app/jobs/process_webhook_event_job.rb). Processing the same event twice does nothing extra, and failed jobs are retried by Sidekiq.
+- **No overselling.** [`Orders::Place`](app/services/orders/place.rb) locks each product row (`SELECT ... FOR UPDATE`) inside one transaction before reducing stock. A `CHECK (stock >= 0)` constraint backs this up. [`place_concurrency_spec.rb`](spec/services/orders/place_concurrency_spec.rb) proves it: four buyers race for the last unit and only one succeeds.
 
 ## Data model
 
